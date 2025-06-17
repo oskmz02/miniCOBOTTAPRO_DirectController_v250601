@@ -51,9 +51,12 @@ def main():
 
     st_minicobo_run = False
     mc_ftr = None
+    pad_ = 0
 
     try:
         while True:
+            pad_ += 1
+            t_st = time.time()
             try:
                 cmd = cmd_q.get_nowait()
             except queue.Empty:
@@ -89,7 +92,15 @@ def main():
             if st != None:
                 led_ctrl.set_ledcmd(st)
 
-            time.sleep(0.008)
+            if st_minicobo_run != True and pad_ % 120 == 0:
+                mc.dxl.readPresentPosition(mc.DXL_IDs)
+                if all(mc.dxl.getdata_result_array) != True:
+                    print(f"com_err")
+
+            t_now = time.time()
+            if (t_now - t_st) <= 0.007:
+                time.sleep(0.008 - (t_now - t_st))
+            # time.sleep(0.008)
     except KeyboardInterrupt:
         print("\n[MAIN] System Shutdown...")
 

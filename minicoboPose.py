@@ -33,7 +33,6 @@ class Quaternion:
         self.z = 1
 
 
-# 値を格納するToRobotクラス
 class ToRobot:
     def __init__(self):
         self.pos = Axis6i()

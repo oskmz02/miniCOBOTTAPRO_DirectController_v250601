@@ -20,6 +20,7 @@ class MiniCoboThread:
         DXL_IDs,
         ctrlmode,
     ):
+        self.ctrlmode = ctrlmode
         self.st_minicobo_init = False
         self.st_com = False
 
@@ -42,7 +43,7 @@ class MiniCoboThread:
         tst.testReadSettings(dxl, DXL_IDs)
         init_getdata_result = dxl.getdata_result_array
         tst_time = tst.elapsed_time * 1000  # [msec]
-        if 9.1 > tst_time or tst_time > 9.9:
+        if 9.1 > tst_time or tst_time > 10.2:
             st_comtime = False
         else:
             st_comtime = True
@@ -64,6 +65,15 @@ class MiniCoboThread:
             print(f"[MINICOBO] Set up successfull")
 
     def directControlPos(self, dxl: Dynamixel, DXL_IDs):
+        for i in range(10):
+            dxl.readPresentPosition(DXL_IDs)
+            print(f"communication result:{dxl.getdata_result_array}")
+            if not all(dxl.getdata_result_array):
+                self.st_com = False
+            time.sleep(0.01)
+        if self.st_com != True:
+            self.startUpSequence(dxl, DXL_IDs, self.ctrlmode)
+            self.m_st_minicobo_q.put("INIT")
         dxl.writeTorqueEnable(DXL_IDs, [1] * len(DXL_IDs))
         self.m_st_minicobo_q.put("AUTO")
 
@@ -112,8 +122,8 @@ class MiniCoboThread:
         PROFILEVELOCITY = np.array([128, 128, 128, 128, 128, 128])
         dxl.writeProfileAcceleration(DXL_IDs, PROFILEACCELERATION)
         dxl.writeProfileVelocity(DXL_IDs, PROFILEVELOCITY)
-        POSDGAIN = np.array([600, 720, 600, 600, 400, 400])
-        POSIGAIN = np.array([48, 18, 6, 64, 60, 20])
+        POSDGAIN = np.array([600, 720, 800, 600, 400, 400])
+        POSIGAIN = np.array([48, 18, 8, 64, 60, 20])
         POSPGAIN = np.array([500, 600, 600, 480, 320, 320])
         dxl.writePositionDGain(DXL_IDs, POSDGAIN)
         dxl.writePositionIGain(DXL_IDs, POSIGAIN)
@@ -124,7 +134,7 @@ class MiniCoboThread:
         pos_ref_prop = cp.copy(pos_ref)
         pos_output = np.array(dxl.readPresentPosition(DXL_IDs))
         tq_output = np.array(dxl.readPresentCurrent(DXL_IDs))
-        time.sleep(0.006)
+        time.sleep(0.003)
 
         try:
             print("--------------| while start |--------------")

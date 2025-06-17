@@ -2,6 +2,8 @@ import os
 import time
 import numpy as np
 
+from Dynamixel import Dynamixel
+
 
 class InitializeEnd:
     """初期化＆終了処理クラス
@@ -9,7 +11,7 @@ class InitializeEnd:
     DXL_IDs: Dynamixel ID (list)
     """
 
-    def __init__(self, dxl, DXL_IDs):
+    def __init__(self, dxl: Dynamixel, DXL_IDs):
         self.dxl = dxl
         self.DXL_IDs = DXL_IDs
 
@@ -26,7 +28,7 @@ class InitializeEnd:
             self.dxl.writeProfileAcceleration(self.DXL_IDs, PROFILEACCELERATION)
             self.dxl.writeProfileVelocity(self.DXL_IDs, PROFILEVELOCITY)
             POSDGAIN = np.array([7200, 9600, 4600, 4800, 600, 600])
-            POSIGAIN = np.array([300, 300, 300, 800, 400, 400])
+            POSIGAIN = np.array([300, 300, 144, 800, 400, 400])
             POSPGAIN = np.array([800, 800, 800, 1420, 600, 600])
             self.dxl.writePositionDGain(self.DXL_IDs, POSDGAIN)
             self.dxl.writePositionIGain(self.DXL_IDs, POSIGAIN)
