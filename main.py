@@ -51,6 +51,7 @@ def main():
 
     st_minicobo_run = False
     mc_ftr = None
+    t_stdw = time.time()
     pad_ = 0
 
     try:
@@ -92,10 +93,15 @@ def main():
             if st != None:
                 led_ctrl.set_ledcmd(st)
 
-            if st_minicobo_run != True and pad_ % 120 == 0:
+            if (
+                st_minicobo_run != True
+                and pad_ % 120 == 0
+                and (time.time() - t_stdw) > 5
+            ):
                 mc.dxl.readPresentPosition(mc.DXL_IDs)
                 if all(mc.dxl.getdata_result_array) != True:
                     print(f"com_err")
+                    mcth.startUpSequence(mc.dxl, mc.DXL_IDs, mc.ctrlmode)
 
             t_now = time.time()
             if (t_now - t_st) <= 0.007:

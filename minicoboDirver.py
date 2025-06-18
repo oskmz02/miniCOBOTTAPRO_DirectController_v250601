@@ -320,16 +320,17 @@ class MiniCoboThread:
                         print(f"a_ref:{np.round(a_ref[i] * kr[i], 2)}")
                     for i in range(len(DXL_IDs)):
                         print(f"v_ref:{np.round(v_ref[i] * kr[i], 2)}")
+                    print(
+                        f"t_p : {np.round(t_600p - t_600m, 3)}, {np.round(t_600t - t_600p, 3)}, {np.round(t_601 - t_600t, 3)}, {np.round(t_602 - t_601, 3)}, {np.round(t_603 - t_602, 3)}, {np.round(t_604 - t_603, 3)}, "
+                    )
                 print(f"com_err_count:{exceptprocess.com_err_count}")
                 print(f"getdata_result:{dxl.getdata_result}")
                 print(f"getdata_result_pos:{getdata_result_pos}")
                 print(f"getdata_result_tq:{getdata_result_tq}")
 
-                t_605 = time.time() * 1000
+                # t_605 = time.time() * 1000
                 t_now = time.time()
-                print(
-                    f"t_p : {np.round(t_600p - t_600m, 3)}, {np.round(t_600t - t_600p, 3)}, {np.round(t_601 - t_600t, 3)}, {np.round(t_602 - t_601, 3)}, {np.round(t_603 - t_602, 3)}, {np.round(t_604 - t_603, 3)}, {np.round(t_605 - t_604, 3)}"
-                )
+
                 print(f"processtime:{t_now - t_st}")
                 if (t_now - t_st) <= 0.009:
                     time.sleep(0.010 - (t_now - t_st))
