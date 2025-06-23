@@ -37,12 +37,16 @@ class InitializeEnd:
             for i in range(1):  # 100回分解能で終了地点に向かう
                 print(f"\n\nーーーー 初期化中 ーーーー")
                 self.dxl.writeGoalPosition(self.DXL_IDs, init_goal_pos)
-                time.sleep(3)
+                for i in range(100):
+                    self.dxl.readPresentPosition(self.DXL_IDs)
+                    time.sleep(0.03)
                 # os.system("clear")
-            for i in range(5):
+            for i in range(40):
                 # os.system("clear")
-                print(f"\n\nーーーー {5-i}秒後に開始します ーーーー")
-                time.sleep(1)
+                if i % 10 == 0:
+                    print(f"\n\nーーーー {(40-i)/10}秒後に開始します ーーーー")
+                self.dxl.readPresentPosition(self.DXL_IDs)
+                time.sleep(0.1)
             # os.system("clear")
             return init_goal_pos
         except KeyboardInterrupt:

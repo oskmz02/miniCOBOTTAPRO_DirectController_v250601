@@ -40,7 +40,7 @@ def main():
     )
     while mcth.st_minicobo_init != True:
         mcth.startUpSequence(mc.dxl, mc.DXL_IDs, mc.ctrlmode)
-        time.sleep(2)
+        time.sleep(0.5)
 
     led_ctrl.set_ledcmd("IDLE")
 
@@ -96,12 +96,14 @@ def main():
             if (
                 st_minicobo_run != True
                 and pad_ % 120 == 0
-                and (time.time() - t_stdw) > 5
+                and (time.time() - t_stdw) > 6
             ):
                 mc.dxl.readPresentPosition(mc.DXL_IDs)
                 if all(mc.dxl.getdata_result_array) != True:
                     print(f"com_err")
+                    cmd_minicobo_q.put("INIT")
                     mcth.startUpSequence(mc.dxl, mc.DXL_IDs, mc.ctrlmode)
+                    cmd_minicobo_q.put("IDLE")
 
             t_now = time.time()
             if (t_now - t_st) <= 0.007:
