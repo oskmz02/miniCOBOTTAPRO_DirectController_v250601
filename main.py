@@ -104,6 +104,7 @@ def main():
                     cmd_minicobo_q.put("INIT")
                     mcth.startUpSequence(mc.dxl, mc.DXL_IDs, mc.ctrlmode)
                     cmd_minicobo_q.put("IDLE")
+                mc.dxl.readPresentPosition(mc.DXL_IDs)
 
             t_now = time.time()
             if (t_now - t_st) <= 0.007:

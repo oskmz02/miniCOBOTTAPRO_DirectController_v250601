@@ -32,14 +32,38 @@ class MiniCoboThread:
         dxl.setRecommendedValue(DXL_IDs)  # 動かすサーボの初期化
         dxl.writeTorqueEnable(DXL_IDs, [0] * len(DXL_IDs))  # Torque off
         dxl.writeOperatingMode(
-            DXL_IDs, ctrlmode * len(DXL_IDs)
+            DXL_IDs, [5] * len(DXL_IDs)
         )  # モード5：位置電流制御モード
         dxl.writeTorqueEnable(DXL_IDs, [1] * len(DXL_IDs))  # Torque on
         tst.testReadSettings(dxl, DXL_IDs)
         print(f"data clearning...")
-        for i in range(1200):
+        for i in range(600):
             dxl.readPresentPosition(DXL_IDs)
             time.sleep(0.008)
+        time.sleep(0.5)
+        PROFILEACCELERATIONINIT = np.array([1, 1, 1, 1, 1, 1])
+        PROFILEVELOCITYINIT = np.array([1, 1, 1, 1, 1, 1])
+        dxl.writeProfileAcceleration(DXL_IDs, PROFILEACCELERATIONINIT)
+        dxl.writeProfileVelocity(DXL_IDs, PROFILEVELOCITYINIT)
+        POSDGAININIT = np.array([8500, 5500, 4000, 4000, 2000, 2000])
+        POSIGAININIT = np.array([0, 0, 0, 0, 0, 0])
+        POSPGAININIT = np.array([800, 300, 400, 800, 200, 800])
+        dxl.writePositionDGain(DXL_IDs, POSDGAININIT)
+        dxl.writePositionIGain(DXL_IDs, POSIGAININIT)
+        dxl.writePositionPGain(DXL_IDs, POSPGAININIT)
+        dxl.writeGoalPosition(DXL_IDs, [1948.0, 1575.0, 1199.0, 1948.0, 1272.0, 1948.0])
+        time.sleep(0.5)
+        dxl.writeGoalPosition(DXL_IDs, [2048.0, 1536.0, 1199.0, 2048.0, 1152.0, 2048.0])
+        n_initcomerr = 0
+        for i in range(2400):
+            dxl.readPresentPosition(DXL_IDs)
+            crnt = dxl.readPresentCurrent(DXL_IDs)
+            if i % 600 == 0:
+                print(crnt)
+            if all(dxl.getdata_result_array) != True:
+                n_initcomerr += 1
+            time.sleep(0.008)
+        print(f"init com err: {n_initcomerr}")
         time.sleep(0.5)
         dxl.setRecommendedValue(DXL_IDs)  # 動かすサーボの初期化
         tst.testReadSettings(dxl, DXL_IDs)
@@ -52,17 +76,10 @@ class MiniCoboThread:
 
         print(f"communication result:{dxl.getdata_result_array}")
 
-        if all(init_getdata_result) != True:
+        if not all(init_getdata_result) or (st_comtime != True) or (n_initcomerr != 0):
             dxl.setRecommendedValue(DXL_IDs)
             tst.testReadSettings(dxl, DXL_IDs)
             for i in range(500):
-                dxl.readPresentPosition(DXL_IDs)
-                time.sleep(0.01)
-            time.sleep(0.5)
-        elif (all(init_getdata_result) == True) and (st_comtime != True):
-            dxl.setRecommendedValue(DXL_IDs)
-            tst.testReadSettings(dxl, DXL_IDs)
-            for i in range(100):
                 dxl.readPresentPosition(DXL_IDs)
                 time.sleep(0.01)
             time.sleep(0.5)
@@ -70,6 +87,7 @@ class MiniCoboThread:
             self.st_com = True
             self.st_minicobo_init = True
             dxl.writeTorqueEnable(DXL_IDs, [0] * len(DXL_IDs))
+            dxl.writeOperatingMode(DXL_IDs, ctrlmode * len(DXL_IDs))
             print(f"[MINICOBO] Set up successfull")
 
     def directControlPos(self, dxl: Dynamixel, DXL_IDs):
@@ -82,6 +100,7 @@ class MiniCoboThread:
         if self.st_com != True:
             self.startUpSequence(dxl, DXL_IDs, self.ctrlmode)
             self.m_st_minicobo_q.put("INIT")
+        dxl.writeOperatingMode(DXL_IDs, self.ctrlmode * len(DXL_IDs))
         dxl.writeTorqueEnable(DXL_IDs, [1] * len(DXL_IDs))
         self.m_st_minicobo_q.put("AUTO")
 
@@ -94,18 +113,18 @@ class MiniCoboThread:
         tq_diff_prev = np.zeros(len(DXL_IDs))
 
         del_t = np.array([0.010] * len(DXL_IDs))
-        alpha = np.array([144.5, 148.0, 50.2, 96.0, 324.0, 422.0])
-        beta = np.array([0.6, 1.2, 4.0, 3.6, 7.0, 22.5])
-        gamma_0 = np.array([13.8, 19.8, 7.8, 10.4, 9.2, 3.2])
+        alpha = np.array([144.5, 148.0, 50.2, 96.0, 392.0, 422.0])
+        beta = np.array([0.6, 1.2, 4.0, 3.6, 3.0, 12.5])
+        gamma_0 = np.array([13.8, 19.8, 7.8, 10.4, 7.2, 3.2])
         gamma_1 = np.array([24.0, 17.0, 10.0, 10.0, 10.0, 10.0])
         gamma_v = np.zeros(len(DXL_IDs))
-        v_0 = np.array([168.0, 168.0, 96.0, 168.0, 62.0, 96.0])
+        v_0 = np.array([168.0, 168.0, 96.0, 168.0, 64.0, 121.0])
 
         a_cul = np.zeros(len(DXL_IDs))
         v_diff = np.zeros(len(DXL_IDs))
         v_ref = np.zeros(len(DXL_IDs))
         a_lim = np.array([2835.0, 2835.0, 1655.0, 4136.0, 4136.0, 4136.0])
-        v_lim = np.array([635.0, 635.0, 275.0, 425.0, 635.0, 870.0])
+        v_lim = np.array([635.0, 635.0, 275.0, 425.0, 685.0, 770.0])
 
         # クラス定義
         initializeend = InitializeEnd(dxl, DXL_IDs)

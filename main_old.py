@@ -28,13 +28,15 @@ def led_breathe():
         for i in range(20):
             if stop_animation:
                 break
-            led_g.value = i / 20
+            led_b.value = i / 20
+            led_r.value = (i / 20) * 0.6
             time.sleep(0.037)
         # 消灯 (1 → 0)
         for i in range(20):
             if stop_animation:
                 break
-            led_g.value = 1 - (i / 20)
+            led_b.value = 1 - (i / 20)
+            led_r.value = (1 - (i / 20)) * 0.6
             time.sleep(0.037)
     led_g.off()
 
@@ -44,7 +46,7 @@ def toggle_output():
     fan_mosfet_state = not fan_mosfet_state
 
     if fan_mosfet_state:
-        print("mini COBOTTA PRO initialized")
+        print("mini COBOTTA PRO debug mode")
         fan_en.on()
         fan_in1.on()
         mosfet_in.on()
@@ -57,13 +59,13 @@ def toggle_output():
         fan_en.off()
         fan_in1.off()
         mosfet_in.off()
-        led_r.off()
-        led_b.off()
 
         stop_animation = True
         if animation_future is not None:
             animation_future.result()  # 完了まで待つ
         led_g.off()
+        led_r.off()
+        led_b.off()
 
     time.sleep(0.05)
 
