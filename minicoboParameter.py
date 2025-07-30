@@ -56,6 +56,7 @@ class MiniCoboParam:
         # アーム重さ(正確でない)
         self.weight_j23 = 230  # j2~j3分の荷重[g]
         self.weight_j36 = 100
+        self.weight_endEffector = 10
 
         # 簡易重力補償係数
         COVER = [0.00117, 0.00131, 0.00197]

@@ -69,7 +69,7 @@ class MiniCoboThread:
         tst.testReadSettings(dxl, DXL_IDs)
         init_getdata_result = dxl.getdata_result_array
         tst_time = tst.elapsed_time * 1000  # [msec]
-        if 9.4 > tst_time or tst_time > 9.8:
+        if 9.0 > tst_time or tst_time > 10.0:
             st_comtime = False
         else:
             st_comtime = True
@@ -104,7 +104,7 @@ class MiniCoboThread:
         dxl.writeTorqueEnable(DXL_IDs, [1] * len(DXL_IDs))
         self.m_st_minicobo_q.put("AUTO")
 
-        tq_threshold = np.array([6, 11, 10, 11, 8, 6])  # 位置用
+        tq_threshold = np.array([4, 10, 10, 12, 8, 6])  # 位置用
         pos_err = np.zeros(len(DXL_IDs))
         pos_input = np.zeros(len(DXL_IDs))
 
@@ -113,18 +113,20 @@ class MiniCoboThread:
         tq_diff_prev = np.zeros(len(DXL_IDs))
 
         del_t = np.array([0.010] * len(DXL_IDs))
-        alpha = np.array([144.5, 148.0, 50.2, 96.0, 392.0, 422.0])
-        beta = np.array([0.6, 1.2, 4.0, 3.6, 3.0, 12.5])
+        alpha = np.array([152, 148.0, 50.2, 108.0, 392.0, 422.0])
+        beta = np.array([0.4, 1.2, 4.0, 3.6, 3.0, 12.5])
         gamma_0 = np.array([13.8, 19.8, 7.8, 10.4, 7.2, 3.2])
         gamma_1 = np.array([24.0, 17.0, 10.0, 10.0, 10.0, 10.0])
         gamma_v = np.zeros(len(DXL_IDs))
-        v_0 = np.array([168.0, 168.0, 96.0, 168.0, 64.0, 121.0])
+        v_0 = np.array([96.0, 168.0, 96.0, 168.0, 64.0, 121.0])
 
         a_cul = np.zeros(len(DXL_IDs))
         v_diff = np.zeros(len(DXL_IDs))
         v_ref = np.zeros(len(DXL_IDs))
         a_lim = np.array([2835.0, 2835.0, 1655.0, 4136.0, 4136.0, 4136.0])
         v_lim = np.array([635.0, 635.0, 275.0, 425.0, 685.0, 770.0])
+        pos_limMax = np.array([3072, 2560, 2389, 2787, 2389, 3072])
+        pos_limMin = np.array([1024, 1707, 1707, 1309, 1256, 1024])
 
         # クラス定義
         initializeend = InitializeEnd(dxl, DXL_IDs)
@@ -280,7 +282,47 @@ class MiniCoboThread:
                         )
 
                         pos_diff_prop = v_ref * del_t
-                        pos_ref_prop += pos_diff_prop
+
+                        # 角度制限処理
+                        pos_limMargine = 20
+                        for i in range(len(DXL_IDs)):
+                            lim_min = pos_limMin[i] + pos_limMargine
+                            lim_max = pos_limMax[i] - pos_limMargine
+                            pos_ref_raw = pos_ref_prop[i] + pos_diff_prop[i]
+
+                            df = 1.0
+
+                            if (pos_ref_raw < pos_limMin[i]) or (
+                                pos_ref_raw > pos_limMax[i]
+                            ):
+                                df = 0.0
+                            elif pos_ref_raw < lim_min:
+                                if pos_diff_prop[i] < 0:
+                                    df = (pos_ref_raw - pos_limMin[i]) / pos_limMargine
+                                    df = max(0.0, min(df, 1.0))
+                            elif pos_ref_raw > lim_max:
+                                if pos_diff_prop[i] > 0:
+                                    df = (pos_limMax[i] - pos_ref_raw) / pos_limMargine
+                                    df = max(0.0, min(df, 1.0))
+
+                            v_ref[i] = v_ref[i] * df
+                            v_diff[i] = v_diff[i] * df
+                            v_diff_prop[i] = v_diff_prop[i] * df
+                            pos_diff_prop[i] = pos_diff_prop[i] * df
+
+                            pos_ref_prop[i] += pos_diff_prop[i]
+
+                        """for i in range(len(DXL_IDs)):
+                            if (pos_ref_prop[i] + pos_diff_prop[i]) < pos_limMin[
+                                i
+                            ] or pos_limMax[i] < (pos_ref_prop[i] + pos_diff_prop[i]):
+                                v_ref[i] = 0
+                                v_diff[i] = 0
+                                v_diff_prop[i] = 0
+                                pos_diff_prop[i] = 0
+                                print(f"Joint {i} out of limit! Blocked.")
+                            else:
+                                pos_ref_prop[i] += pos_diff_prop[i]"""
 
                         poseprop.setPose(pos_ref_prop - pos_init_goal, 1)
                         """ここで速度超過の判定"""
@@ -294,8 +336,8 @@ class MiniCoboThread:
                         )
                         v_prop_norm = np.linalg.norm(del_pose_prop) / del_t[0]
                         print(f"v_prop_norm : {np.round(v_prop_norm, 2)}")
-                        if v_prop_norm > 200:
-                            kr = np.array([200 / v_prop_norm] * len(DXL_IDs))
+                        if v_prop_norm > 180:
+                            kr = np.array([180 / v_prop_norm] * len(DXL_IDs))
                             v_ref *= kr
                             v_diff *= kr
                         else:

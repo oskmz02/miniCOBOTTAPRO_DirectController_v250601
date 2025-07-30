@@ -17,8 +17,8 @@ class MiniCoboGravCom:
         self._length_35 = mcp.length_35
         self._length_36 = mcp.length_36
 
-        self._weight_j23 = mcp.weight_j23
-        self._weight_j36 = mcp.weight_j36
+        self._weight_j23 = mcp.weight_j23 + mcp.weight_endEffector
+        self._weight_j36 = mcp.weight_j36 + mcp.weight_endEffector
 
         self._tp_grav_j23 = mcp.tp_grav_j23
         self._tp_grav_j36 = mcp.tp_grav_j36
